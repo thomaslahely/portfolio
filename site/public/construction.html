@@ -1,0 +1,78 @@
+<!doctype html>
+<!-- Page affichée par Caddy pour tout lahely.fr tant que le site est en travaux
+     (rewrite * /construction.html). Autonome : aucun fichier externe. -->
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Thomas Lahely · Portfolio en construction</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f5bd3'/%3E%3Ctext x='16' y='21.5' font-family='system-ui,sans-serif' font-size='14' font-weight='700' fill='%23fff' text-anchor='middle'%3ETL%3C/text%3E%3C/svg%3E">
+  <style>
+    :root {
+      --fond: #fbfbfa; --texte: #1d1d1f; --discret: #5f6368;
+      --bordure: #e3e3e0; --accent: #2f5bd3;
+      color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fond: #151517; --texte: #ececef; --discret: #a1a1aa;
+        --bordure: #303035; --accent: #7f9dff;
+        color-scheme: dark;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 2rem 1rem;
+      background: var(--fond);
+      color: var(--texte);
+      font: 17px/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    main { max-width: 34rem; }
+    .etiquette {
+      display: inline-block;
+      margin-bottom: 1.25rem;
+      padding: 0.25rem 0.75rem;
+      border: 1px solid var(--bordure);
+      border-radius: 999px;
+      color: var(--discret);
+      font-size: 0.85rem;
+    }
+    .etiquette::before {
+      content: '';
+      display: inline-block;
+      width: 0.5rem; height: 0.5rem;
+      margin-right: 0.5rem;
+      border-radius: 50%;
+      background: #e8a33d;
+      vertical-align: 0.05em;
+    }
+    h1 { margin: 0 0 0.25rem; font-size: 2.25rem; line-height: 1.15; letter-spacing: -0.01em; }
+    .accroche { margin: 0 0 1.5rem; font-size: 1.15rem; font-weight: 500; }
+    p { color: var(--discret); }
+    nav { display: flex; flex-wrap: wrap; gap: 1.25rem; margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--bordure); }
+    a { color: var(--accent); text-underline-offset: 0.15em; }
+  </style>
+</head>
+<body>
+  <main>
+    <span class="etiquette">Site en construction</span>
+    <h1>Thomas Lahely</h1>
+    <p class="accroche">Étudiant en Master 2 Informatique, parcours Intelligence Artificielle.</p>
+    <p>
+      Mon portfolio arrive bientôt, avec un assistant capable de répondre
+      à vos questions sur mon parcours et mes projets.
+      En attendant, vous pouvez découvrir mon travail sur GitHub ou me contacter directement.
+    </p>
+    <nav aria-label="Liens">
+      <a href="https://github.com/thomaslahely" rel="me">GitHub</a>
+      <a href="https://www.linkedin.com/in/thomas-lahely-7a198336b/" rel="me">LinkedIn</a>
+      <a href="mailto:thomasun59@gmail.com">thomasun59@gmail.com</a>
+    </nav>
+  </main>
+</body>
+</html>
