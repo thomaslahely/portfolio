@@ -18,8 +18,9 @@ main() {
   git log -1 --format='   %h %s'
 
   echo "== 2/4 site : build Astro dans un conteneur Node jetable"
+  # tout le dépôt est monté : le site lit ses pages dans ../contenu/
   docker run --rm \
-    -v "$PWD/site:/site" -w /site \
+    -v "$PWD:/depot" -w /depot/site \
     -u "$(id -u):$(id -g)" -e npm_config_cache=/tmp/.npm \
     node:22-alpine \
     sh -c 'npm ci --no-audit --no-fund --loglevel=error && npm run build --silent'
