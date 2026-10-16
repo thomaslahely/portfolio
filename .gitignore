@@ -1,0 +1,17 @@
+# secrets
+.env
+*.env
+
+# Python
+.venv/
+__pycache__/
+
+# index généré par rag/indexer.py (reconstruit au build)
+rag/index/
+
+# Astro / Node
+node_modules/
+dist/
+.astro/
+
+.DS_Store
