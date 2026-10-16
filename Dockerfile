@@ -14,7 +14,10 @@ WORKDIR /app/rag
 # 1. Dépendances seules d'abord : cette couche (torch…, la plus lourde) reste
 #    en cache tant que pyproject.toml / uv.lock ne changent pas.
 COPY rag/pyproject.toml rag/uv.lock ./
-RUN uv sync --locked --no-dev
+# cache uv monté HORS de l'image (sinon ~1,2 Go de paquets en double dedans),
+# et réutilisé d'un build à l'autre
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev
 
 # 2. Code et contenu, puis indexation au build : le modèle d'embeddings est
 #    téléchargé ici, une fois, et l'index est figé dans l'image.
