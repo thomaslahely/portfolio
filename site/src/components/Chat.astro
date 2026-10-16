@@ -1,0 +1,320 @@
+---
+// Widget de chat : bouton flottant + panneau. Parle à /api/chat (rag/api.py)
+// et lit la réponse en streaming (Server-Sent Events sur une requête POST).
+const suggestions = [
+  "Quels projets d'IA Thomas a-t-il réalisés ?",
+  "Quelles sont ses compétences en admin système ?",
+  'Comment fonctionne ce chatbot ?',
+];
+---
+
+<button id="chat-ouvrir" class="chat-bouton" aria-expanded="false" aria-controls="chat-panneau">
+  Poser une question
+</button>
+
+<section id="chat-panneau" class="chat-panneau" role="dialog" aria-label="Assistant du portfolio" hidden>
+  <header class="chat-entete">
+    <div>
+      <strong>Assistant du portfolio</strong>
+      <span>Répond à partir des pages de ce site</span>
+    </div>
+    <button id="chat-fermer" class="chat-fermer" aria-label="Fermer l'assistant">×</button>
+  </header>
+
+  <div id="chat-fil" class="chat-fil" aria-live="polite">
+    <div class="chat-msg assistant">
+      <p>Bonjour ! Je réponds aux questions sur le parcours, les compétences et les projets de Thomas.</p>
+    </div>
+    <div class="chat-suggestions">
+      {suggestions.map((s) => <button type="button" data-suggestion={s}>{s}</button>)}
+    </div>
+  </div>
+
+  <form id="chat-form" class="chat-form">
+    <label for="chat-question" class="visuellement-cache">Votre question</label>
+    <input id="chat-question" name="question" maxlength="500" autocomplete="off"
+           placeholder="Votre question…" required />
+    <button type="submit">Envoyer</button>
+  </form>
+  <p class="chat-mention">Réponses générées par IA, à vérifier sur les pages citées.</p>
+</section>
+
+<script>
+  const MAX_HISTORIQUE = 4;
+
+  const bouton = document.getElementById('chat-ouvrir') as HTMLButtonElement;
+  const panneau = document.getElementById('chat-panneau') as HTMLElement;
+  const fermer = document.getElementById('chat-fermer') as HTMLButtonElement;
+  const fil = document.getElementById('chat-fil') as HTMLElement;
+  const formulaire = document.getElementById('chat-form') as HTMLFormElement;
+  const champ = document.getElementById('chat-question') as HTMLInputElement;
+
+  let historique: { role: 'user' | 'assistant'; content: string }[] = [];
+  let enCours = false;
+
+  function basculer(ouvert: boolean) {
+    panneau.hidden = !ouvert;
+    bouton.hidden = ouvert;
+    bouton.setAttribute('aria-expanded', String(ouvert));
+    if (ouvert) champ.focus();
+    else bouton.focus();
+  }
+  bouton.addEventListener('click', () => basculer(true));
+  fermer.addEventListener('click', () => basculer(false));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !panneau.hidden) basculer(false);
+  });
+  // n'importe quel élément de la page peut ouvrir le chat : <a data-ouvrir-chat>
+  document.querySelectorAll('[data-ouvrir-chat]').forEach((el) =>
+    el.addEventListener('click', (e) => { e.preventDefault(); basculer(true); }),
+  );
+
+  // --- mini-rendu Markdown SÛR : on échappe tout le HTML d'abord ----------
+  // (la réponse vient d'un LLM : jamais de innerHTML sur du texte brut)
+  function echapper(texte: string) {
+    return texte.replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!,
+    );
+  }
+  function lienAutorise(url: string) {
+    return /^(https?:\/\/|\/(?!\/)|mailto:)/.test(url); // pas de javascript:, data:…
+  }
+  function enLigne(texte: string) {
+    return texte
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, libelle, url) => {
+        if (!lienAutorise(url)) return libelle;
+        const externe = url.startsWith('/') ? '' : ' target="_blank" rel="noopener"';
+        return `<a href="${url}"${externe}>${libelle}</a>`;
+      });
+  }
+  function markdown(texte: string) {
+    let html = '';
+    let dansListe = false;
+    for (const ligne of echapper(texte).split('\n')) {
+      const item = ligne.match(/^\s*[-*]\s+(.*)/);
+      if (item) {
+        if (!dansListe) { html += '<ul>'; dansListe = true; }
+        html += `<li>${enLigne(item[1])}</li>`;
+        continue;
+      }
+      if (dansListe) { html += '</ul>'; dansListe = false; }
+      if (ligne.trim()) html += `<p>${enLigne(ligne)}</p>`;
+    }
+    return dansListe ? html + '</ul>' : html;
+  }
+
+  function ajouterMessage(role: 'user' | 'assistant', texte: string) {
+    const bulle = document.createElement('div');
+    bulle.className = `chat-msg ${role}`;
+    bulle.textContent = texte;
+    fil.appendChild(bulle);
+    fil.scrollTop = fil.scrollHeight;
+    return bulle;
+  }
+
+  // --- lecture du flux SSE -------------------------------------------------
+  // EventSource ne sait faire que du GET : on lit le flux du fetch POST à la main.
+  async function demander(question: string, bulle: HTMLElement) {
+    const reponseHttp = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, historique: historique.slice(-MAX_HISTORIQUE) }),
+    });
+    if (!reponseHttp.ok || !reponseHttp.body) {
+      let message = 'Le chatbot est momentanément indisponible.';
+      try {
+        const corps = await reponseHttp.json();
+        if (typeof corps.detail === 'string') message = corps.detail; // 429, 503
+      } catch {}
+      throw new Error(message);
+    }
+
+    const lecteur = reponseHttp.body.pipeThrough(new TextDecoderStream()).getReader();
+    let tampon = '';
+    let reponse = '';
+    while (true) {
+      const { value, done } = await lecteur.read();
+      if (done) break;
+      tampon += value;
+      // un événement SSE se termine par une ligne vide
+      let fin;
+      while ((fin = tampon.indexOf('\n\n')) !== -1) {
+        const bloc = tampon.slice(0, fin);
+        tampon = tampon.slice(fin + 2);
+        const evenement = /^event: (.*)$/m.exec(bloc)?.[1];
+        const donnees = /^data: (.*)$/m.exec(bloc)?.[1];
+        if (!evenement || donnees === undefined) continue;
+        const contenu = JSON.parse(donnees);
+        if (evenement === 'texte') {
+          reponse += contenu.texte;
+          bulle.innerHTML = markdown(reponse);
+          fil.scrollTop = fil.scrollHeight;
+        } else if (evenement === 'erreur') {
+          throw new Error(contenu.message);
+        }
+      }
+    }
+    return reponse;
+  }
+
+  async function envoyer(question: string) {
+    question = question.trim();
+    if (!question || enCours) return;
+    enCours = true;
+    formulaire.querySelector('button')!.disabled = true;
+    fil.querySelector('.chat-suggestions')?.remove();
+
+    ajouterMessage('user', question);
+    const bulle = ajouterMessage('assistant', '');
+    bulle.classList.add('en-attente');
+    try {
+      const reponse = await demander(question, bulle);
+      historique.push({ role: 'user', content: question }, { role: 'assistant', content: reponse });
+    } catch (erreur) {
+      bulle.classList.add('erreur');
+      bulle.textContent = erreur instanceof Error ? erreur.message : 'Erreur inattendue.';
+    } finally {
+      bulle.classList.remove('en-attente');
+      enCours = false;
+      formulaire.querySelector('button')!.disabled = false;
+      champ.focus();
+    }
+  }
+
+  formulaire.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const question = champ.value;
+    champ.value = '';
+    envoyer(question);
+  });
+  fil.addEventListener('click', (e) => {
+    const suggestion = (e.target as HTMLElement).closest<HTMLElement>('[data-suggestion]');
+    if (suggestion) envoyer(suggestion.dataset.suggestion!);
+  });
+</script>
+
+<style>
+  .chat-bouton {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 20;
+    padding: 0.8rem 1.2rem;
+    border: none;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--accent-texte);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgb(0 0 0 / 0.18);
+  }
+  .chat-bouton[hidden] { display: none; }
+
+  .chat-panneau {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 20;
+    width: min(26rem, calc(100vw - 2rem));
+    height: min(36rem, calc(100dvh - 2rem));
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--bordure);
+    border-radius: 14px;
+    box-shadow: 0 12px 40px rgb(0 0 0 / 0.22);
+    font-size: 0.95rem;
+  }
+  .chat-panneau[hidden] { display: none; }
+
+  .chat-entete {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--bordure);
+  }
+  .chat-entete span { display: block; color: var(--discret); font-size: 0.85rem; }
+  .chat-fermer {
+    border: none;
+    background: none;
+    color: var(--discret);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0.25rem;
+  }
+
+  .chat-fil {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .chat-msg {
+    max-width: 90%;
+    padding: 0.6rem 0.85rem;
+    border-radius: 12px;
+    overflow-wrap: anywhere;
+  }
+  .chat-msg :global(p) { margin: 0 0 0.5em; }
+  .chat-msg :global(p:last-child) { margin-bottom: 0; }
+  .chat-msg :global(ul) { margin: 0.25em 0 0.5em; padding-left: 1.2em; }
+  .chat-msg.user { align-self: flex-end; background: var(--accent); color: var(--accent-texte); }
+  .chat-msg.assistant { align-self: flex-start; background: var(--code); }
+  .chat-msg.erreur { color: #c62828; }
+  .chat-msg.en-attente:empty::after { content: '…'; animation: clignote 1s infinite; }
+  @keyframes clignote { 50% { opacity: 0.3; } }
+
+  .chat-suggestions { display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem; }
+  .chat-suggestions button {
+    border: 1px solid var(--bordure);
+    background: none;
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 0.35rem 0.8rem;
+    font: inherit;
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .chat-form { display: flex; gap: 0.5rem; padding: 0.75rem 1rem 0.25rem; border-top: 1px solid var(--bordure); }
+  .chat-form input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--bordure);
+    border-radius: 8px;
+    background: var(--fond);
+    color: var(--texte);
+    font: inherit;
+    font-size: 16px; /* évite le zoom automatique sur iPhone */
+  }
+  .chat-form button {
+    padding: 0.55rem 0.9rem;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: var(--accent-texte);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .chat-form button:disabled { opacity: 0.5; cursor: wait; }
+  .chat-mention { margin: 0; padding: 0.25rem 1rem 0.6rem; color: var(--discret); font-size: 0.75rem; }
+
+  .visuellement-cache {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+</style>

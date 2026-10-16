@@ -1,0 +1,126 @@
+---
+import Chat from '../components/Chat.astro';
+
+interface Props {
+  titre?: string;
+  description?: string;
+}
+const {
+  titre,
+  description = "Portfolio de Thomas Lahely, étudiant en Master 2 Informatique parcours IA, en recherche d'alternance.",
+} = Astro.props;
+const titrePage = titre ? `${titre} · Thomas Lahely` : 'Thomas Lahely · Portfolio';
+const chemin = Astro.url.pathname;
+const actif = (prefixe: string) => (chemin === prefixe || chemin.startsWith(prefixe + '/') ? 'page' : undefined);
+---
+
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{titrePage}</title>
+  </head>
+  <body>
+    <header class="entete">
+      <a class="logo" href="/">Thomas Lahely</a>
+      <nav aria-label="Navigation principale">
+        <a href="/projets" aria-current={actif('/projets')}>Projets</a>
+        <a href="/notes" aria-current={actif('/notes')}>Notes</a>
+        <a href="/a-propos" aria-current={actif('/a-propos')}>À propos</a>
+      </nav>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="pied">
+      <a href="https://github.com/thomaslahely" rel="me">GitHub</a>
+      <a href="https://www.linkedin.com/in/thomas-lahely-7a198336b/" rel="me">LinkedIn</a>
+      <a href="mailto:thomasun59@gmail.com">Email</a>
+    </footer>
+
+    <Chat />
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --fond: #fbfbfa;
+    --surface: #ffffff;
+    --texte: #1d1d1f;
+    --discret: #5f6368;
+    --bordure: #e3e3e0;
+    --accent: #2f5bd3;
+    --accent-texte: #ffffff;
+    --code: #f1f1ee;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fond: #151517;
+      --surface: #1e1e21;
+      --texte: #ececef;
+      --discret: #a1a1aa;
+      --bordure: #303035;
+      --accent: #7f9dff;
+      --accent-texte: #0d0d10;
+      --code: #26262b;
+      color-scheme: dark;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--fond);
+    color: var(--texte);
+    font: 17px/1.65 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  main {
+    flex: 1;
+    width: 100%;
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 2rem 1rem 4rem;
+  }
+  a { color: var(--accent); text-underline-offset: 0.15em; }
+  h1 { font-size: 2rem; line-height: 1.2; margin: 0.5rem 0 1.25rem; letter-spacing: -0.01em; }
+  h2 { font-size: 1.3rem; margin: 2.25rem 0 0.5rem; }
+  h3 { font-size: 1.1rem; margin: 1.5rem 0 0.25rem; }
+  code { background: var(--code); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.9em; }
+  pre { background: var(--code); padding: 1rem; border-radius: 8px; overflow-x: auto; }
+  pre code { background: none; padding: 0; }
+
+  .entete {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    align-items: baseline;
+    justify-content: space-between;
+    max-width: 46rem;
+    width: 100%;
+    margin: 0 auto;
+    padding: 1.25rem 1rem 0;
+  }
+  .logo { font-weight: 700; color: var(--texte); text-decoration: none; }
+  .entete nav { display: flex; gap: 1.25rem; }
+  .entete nav a { color: var(--discret); text-decoration: none; }
+  .entete nav a:hover, .entete nav a[aria-current='page'] { color: var(--texte); }
+
+  .pied {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    padding: 2rem 1rem 6rem;
+    border-top: 1px solid var(--bordure);
+    font-size: 0.95rem;
+  }
+  .pied a { color: var(--discret); }
+</style>

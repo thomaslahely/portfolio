@@ -1,0 +1,14 @@
+---
+import { getEntry, render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+
+const cv = await getEntry('pages', 'cv');
+if (!cv) throw new Error('contenu/cv.md introuvable');
+const { Content } = await render(cv);
+---
+
+<Base titre="À propos">
+  <article>
+    <Content />
+  </article>
+</Base>

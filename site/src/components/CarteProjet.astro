@@ -1,0 +1,38 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { resume, titreCourt } from '../lib/projets';
+
+interface Props {
+  projet: CollectionEntry<'projets'>;
+}
+const { projet } = Astro.props;
+---
+
+<a class="carte" href={`/projets/${projet.id}`}>
+  <h2>{titreCourt(projet)}</h2>
+  <p>{resume(projet)}</p>
+</a>
+
+<style>
+  .carte {
+    display: block;
+    padding: 1rem 1.15rem;
+    background: var(--surface);
+    border: 1px solid var(--bordure);
+    border-radius: 12px;
+    color: var(--texte);
+    text-decoration: none;
+    transition: border-color 0.15s;
+  }
+  .carte:hover { border-color: var(--accent); }
+  h2 { margin: 0 0 0.35rem; font-size: 1.05rem; color: var(--accent); }
+  p {
+    margin: 0;
+    color: var(--discret);
+    font-size: 0.95rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>

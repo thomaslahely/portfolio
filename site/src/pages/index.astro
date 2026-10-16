@@ -1,0 +1,52 @@
+---
+import Base from '../layouts/Base.astro';
+import CarteProjet from '../components/CarteProjet.astro';
+import { projetsTries } from '../lib/projets';
+
+const projets = (await projetsTries()).slice(0, 4);
+---
+
+<Base>
+  <section class="intro">
+    <h1>Thomas Lahely</h1>
+    <p class="accroche">
+      Étudiant en Master 2 Informatique, parcours Intelligence Artificielle,
+      à la recherche d'une alternance.
+    </p>
+    <p>
+      J'aime construire des choses qui tournent pour de vrai : un RAG codé à la main,
+      le serveur qui l'héberge, et ce qu'il faut pour le surveiller.
+      Le plus simple pour me découvrir : posez une question à mon assistant,
+      il répond à partir des pages de ce site.
+    </p>
+    <p class="actions">
+      <a class="principal" href="#" data-ouvrir-chat>Poser une question</a>
+      <a href="/a-propos">Mon parcours</a>
+    </p>
+  </section>
+
+  <h2>Projets à la une</h2>
+  <div class="grille">
+    {projets.map((projet) => <CarteProjet projet={projet} />)}
+  </div>
+  <p><a href="/projets">Voir tous les projets →</a></p>
+</Base>
+
+<style>
+  .intro { margin-bottom: 2.5rem; }
+  .accroche { font-size: 1.2rem; color: var(--texte); font-weight: 500; }
+  .intro p { color: var(--discret); }
+  .actions { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-top: 1.5rem; }
+  .principal {
+    padding: 0.6rem 1.1rem;
+    border-radius: 8px;
+    background: var(--accent);
+    color: var(--accent-texte);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .grille { display: grid; gap: 1rem; margin-bottom: 1rem; }
+  @media (min-width: 640px) {
+    .grille { grid-template-columns: 1fr 1fr; }
+  }
+</style>
