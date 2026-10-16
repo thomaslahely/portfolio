@@ -9,6 +9,9 @@ __pycache__/
 # index généré par rag/indexer.py (reconstruit au build)
 rag/index/
 
+# site publié sur le VPS (copie de site/dist, fait par deploy.sh)
+www/
+
 # Astro / Node
 node_modules/
 dist/

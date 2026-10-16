@@ -1,0 +1,36 @@
+# À chaque push sur main : demande au VPS de se redéployer.
+# La clé SSH n'autorise QUE ~/apps/portfolio/deploy.sh (option command= dans
+# ~/.ssh/authorized_keys du serveur) : elle ne donne pas de shell.
+name: Déploiement
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # bouton « Run workflow » dans l'onglet Actions
+
+# deux pushs rapprochés : le second attend la fin du premier
+concurrency:
+  group: deploiement
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deployer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Préparer SSH
+        env:
+          CLE: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOTES_CONNUS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$CLE" > ~/.ssh/deploiement
+          chmod 600 ~/.ssh/deploiement
+          # empreinte du serveur fixée à l'avance : pas de StrictHostKeyChecking=no
+          printf '%s\n' "$HOTES_CONNUS" > ~/.ssh/known_hosts
+
+      - name: Déployer sur le VPS
+        run: ssh -i ~/.ssh/deploiement -o IdentitiesOnly=yes ubuntu@lahely.fr

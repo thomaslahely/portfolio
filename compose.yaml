@@ -1,0 +1,17 @@
+# Sur le VPS : ~/apps/portfolio (clone de ce dépôt). Lancé par deploy.sh.
+services:
+  portfolio-rag:
+    build: .
+    image: portfolio-rag
+    container_name: portfolio-rag
+    restart: unless-stopped
+    # ANTHROPIC_API_KEY : fichier présent uniquement sur le serveur (ignoré par git)
+    env_file: ./api.env
+    # aucune section ports : Caddy joint l'API par le réseau web (portfolio-rag:8000)
+    networks:
+      - web
+    mem_limit: 1536m
+
+networks:
+  web:
+    external: true

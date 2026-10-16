@@ -1,0 +1,11 @@
+# Le build n'a besoin que de rag/*.py, rag/pyproject.toml, rag/uv.lock et contenu/
+.git
+.github
+site
+www
+**/.venv
+**/__pycache__
+rag/index
+**/.env
+*.env
+.DS_Store
