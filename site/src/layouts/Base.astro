@@ -4,14 +4,22 @@ import Chat from '../components/Chat.astro';
 interface Props {
   titre?: string;
   description?: string;
+  /** « article » pour une page projet ou une note (balise og:type) */
+  type?: 'website' | 'article';
 }
-const {
-  titre,
-  description = "Portfolio de Thomas Lahely, étudiant en Master 2 Informatique parcours IA, en recherche d'alternance.",
-} = Astro.props;
+const DESCRIPTION_DEFAUT =
+  "Portfolio de Thomas Lahely, étudiant en Master 2 Informatique parcours IA, en recherche d'alternance.";
+const { titre, type = 'website' } = Astro.props;
+// « || » et pas une valeur par défaut : un résumé vide ('') doit aussi retomber sur la description du site
+const description = Astro.props.description || DESCRIPTION_DEFAUT;
 const titrePage = titre ? `${titre} · Thomas Lahely` : 'Thomas Lahely · Portfolio';
 const chemin = Astro.url.pathname;
 const actif = (prefixe: string) => (chemin === prefixe || chemin.startsWith(prefixe + '/') ? 'page' : undefined);
+// Adresse officielle de la page : toujours https://lahely.fr/…, même vue depuis preview.lahely.fr.
+// Elle sert à « canonical » (moteurs de recherche) et à og:url (aperçus de liens).
+const adresse = new URL(chemin, Astro.site).href;
+// Image des aperçus (LinkedIn, Slack, Discord…) : adresse absolue obligatoire. Source : site/src/og.svg
+const image = new URL('/og.png', Astro.site).href;
 ---
 
 <html lang="fr">
@@ -19,16 +27,32 @@ const actif = (prefixe: string) => (chemin === prefixe || chemin.startsWith(pref
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
+    <link rel="canonical" href={adresse} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="sitemap" href="/sitemap.xml" />
     <title>{titrePage}</title>
+
+    <!-- Open Graph : ce que LinkedIn, Slack, Discord… affichent quand on partage un lien -->
+    <meta property="og:site_name" content="Thomas Lahely" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={titrePage} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={adresse} />
+    <meta property="og:image" content={image} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Thomas Lahely, étudiant en Master 2 Informatique parcours IA" />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
     <header class="entete">
       <a class="logo" href="/">Thomas Lahely</a>
       <nav aria-label="Navigation principale">
-        <a href="/projets" aria-current={actif('/projets')}>Projets</a>
-        <a href="/notes" aria-current={actif('/notes')}>Notes</a>
-        <a href="/a-propos" aria-current={actif('/a-propos')}>À propos</a>
+        <!-- « / » final partout : sans lui, le serveur répond d'abord par une redirection 308 -->
+        <a href="/projets/" aria-current={actif('/projets')}>Projets</a>
+        <a href="/notes/" aria-current={actif('/notes')}>Notes</a>
+        <a href="/a-propos/" aria-current={actif('/a-propos')}>À propos</a>
       </nav>
     </header>
 

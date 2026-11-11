@@ -21,7 +21,7 @@ const projets = (await projetsTries()).slice(0, 4);
     </p>
     <p class="actions">
       <a class="principal" href="#" data-ouvrir-chat>Poser une question</a>
-      <a href="/a-propos">Mon parcours</a>
+      <a href="/a-propos/">Mon parcours</a>
     </p>
   </section>
 
@@ -29,7 +29,7 @@ const projets = (await projetsTries()).slice(0, 4);
   <div class="grille">
     {projets.map((projet) => <CarteProjet projet={projet} />)}
   </div>
-  <p><a href="/projets">Voir tous les projets →</a></p>
+  <p><a href="/projets/">Voir tous les projets →</a></p>
 </Base>
 
 <style>

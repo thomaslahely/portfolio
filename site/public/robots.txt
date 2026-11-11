@@ -1,0 +1,5 @@
+# Tout le site est public. /api/ est l'API du chatbot : rien à indexer.
+User-agent: *
+Disallow: /api/
+
+Sitemap: https://lahely.fr/sitemap.xml

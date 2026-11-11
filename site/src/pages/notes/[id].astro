@@ -11,8 +11,8 @@ const { note } = Astro.props;
 const { Content } = await render(note);
 ---
 
-<Base titre={note.data.titre.replace(/^Note\s+—\s+/, '')}>
-  <p class="retour"><a href="/notes">← Toutes les notes</a></p>
+<Base titre={note.data.titre.replace(/^Note\s+—\s+/, '')} type="article">
+  <p class="retour"><a href="/notes/">← Toutes les notes</a></p>
   <article>
     <Content />
   </article>

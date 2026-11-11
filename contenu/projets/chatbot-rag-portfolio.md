@@ -44,7 +44,7 @@ qu'utilise un recruteur.
 
 API en Python avec FastAPI, conteneurisée avec Docker et hébergée sur le serveur
 personnel de Thomas, derrière le reverse proxy Caddy (HTTPS automatique).
-Voir aussi le [serveur personnel lahely.fr](/projets/vps-lahely).
+Voir aussi le [serveur personnel lahely.fr](/projets/vps-lahely/).
 
 ## Technologies
 

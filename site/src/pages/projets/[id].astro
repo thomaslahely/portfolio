@@ -12,8 +12,8 @@ const { projet } = Astro.props;
 const { Content } = await render(projet);
 ---
 
-<Base titre={titreCourt(projet)} description={resume(projet)}>
-  <p class="retour"><a href="/projets">← Tous les projets</a></p>
+<Base titre={titreCourt(projet)} description={resume(projet)} type="article">
+  <p class="retour"><a href="/projets/">← Tous les projets</a></p>
   <article>
     <Content />
   </article>

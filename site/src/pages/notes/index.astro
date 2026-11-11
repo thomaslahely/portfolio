@@ -10,7 +10,7 @@ const notes = (await getCollection('notes')).sort((a, b) => a.data.titre.localeC
   <p>Notes techniques écrites en administrant mon serveur et en travaillant sur mes projets.</p>
   <ul>
     {notes.map((note) => (
-      <li><a href={`/notes/${note.id}`}>{note.data.titre.replace(/^Note\s+—\s+/, '')}</a></li>
+      <li><a href={`/notes/${note.id}/`}>{note.data.titre.replace(/^Note\s+—\s+/, '')}</a></li>
     ))}
   </ul>
 </Base>

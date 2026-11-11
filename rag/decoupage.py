@@ -83,6 +83,9 @@ def decouper_fichier(chemin, racine):
     titre_doc = meta.get("titre", chemin.stem)
     # URL citée par le bot : celle du front matter, sinon la page du portfolio
     url = meta.get("url", f"/{relatif}")
+    # pages du site : « / » final, sinon chaque lien cité coûte une redirection 308
+    if url.startswith("/") and not url.endswith("/"):
+        url += "/"
 
     chunks = []
     for section, texte in sections(corps):

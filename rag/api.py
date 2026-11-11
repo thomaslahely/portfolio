@@ -50,7 +50,7 @@ phrase et rappelle ce à quoi tu peux répondre.
 - Parle de Thomas à la troisième personne. Réponds dans la langue de la question, en 2 à 5 phrases \
 ou une courte liste.
 - Quand tu t'appuies sur un document, cite-le avec un lien Markdown vers son url, par exemple \
-[serveur personnel](/projets/vps-lahely)."""
+[serveur personnel](/projets/vps-lahely/)."""
 
 REPONSE_HORS_SUJET = (
     "Je suis l'assistant du portfolio de Thomas : je réponds aux questions sur son parcours, "

@@ -8,7 +8,7 @@ interface Props {
 const { projet } = Astro.props;
 ---
 
-<a class="carte" href={`/projets/${projet.id}`}>
+<a class="carte" href={`/projets/${projet.id}/`}>
   <h2>{titreCourt(projet)}</h2>
   <p>{resume(projet)}</p>
 </a>

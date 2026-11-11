@@ -26,7 +26,8 @@ export function titreCourt(projet: CollectionEntry<'projets'>) {
 /** Premier paragraphe de la section « Résumé » (ou de la page), sans Markdown. */
 export function resume(projet: CollectionEntry<'projets'>) {
   const corps = (projet.body ?? '').replace(/<!--[\s\S]*?-->/g, '');
-  const section = corps.split(/^##\s+Résumé\s*$/m)[1] ?? corps.split(/^##\s+/m)[1] ?? '';
+  // sans section « Résumé » : le texte qui suit le premier titre ## (la ligne du titre est retirée avec lui)
+  const section = corps.split(/^##\s+Résumé\s*$/m)[1] ?? corps.split(/^##\s+.*$/m)[1] ?? '';
   const paragraphe = section.trim().split(/\n\s*\n/)[0] ?? '';
   return paragraphe
     .split('\n')
