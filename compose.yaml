@@ -11,6 +11,14 @@ services:
     networks:
       - web
     mem_limit: 1536m
+    # Durcissement, comme les autres conteneurs du VPS : aucune capacité Linux (l'API n'écoute
+    # que sur le port 8000 et n'écrit nulle part), pas d'élévation de privilèges possible,
+    # et un plafond de processus (13 en temps normal) contre un emballement.
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
 
 networks:
   web:
